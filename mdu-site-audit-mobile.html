@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MDU Site Audit</title>
+<style>
+  :root{
+    --navy:#0f1b2d; --navy-2:#16263d; --navy-3:#1e3350;
+    --gold:#c9a227; --gold-soft:#e3c659;
+    --bg:#eef1f5; --card:#fff; --line:#dce1e8;
+    --ink:#1b2533; --muted:#6b7888; --grey:#9aa6b4;
+    --green:#2e9e5b; --green-bg:#e4f4ea;
+    --red:#cc4b4b; --red-bg:#fbe9e9;
+    --na:#7a8696; --na-bg:#eceff3;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+
+  .top{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;
+    padding:14px 16px 12px;border-bottom:3px solid var(--gold);
+    padding-top:calc(14px + env(safe-area-inset-top));
+  }
+  .top .row{display:flex;justify-content:space-between;align-items:baseline}
+  .top .ttl{font-size:13px;font-weight:700;letter-spacing:.3px}
+  .top .step{font-size:12px;color:var(--gold-soft);font-weight:700}
+  .pbar{height:7px;background:#23375492;border-radius:5px;overflow:hidden;margin-top:9px}
+  .pbar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-soft));transition:width .3s}
+
+  .screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 24px}
+
+  .qhead{display:flex;gap:12px;margin-bottom:16px}
+  .qnum{
+    width:34px;height:34px;border-radius:10px;background:var(--navy);color:var(--gold-soft);
+    font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .qtitle{font-size:18px;font-weight:700;line-height:1.3;padding-top:3px}
+  .schem{display:inline-block;font-size:10.5px;font-weight:700;color:var(--gold);background:#fbf3d6;border-radius:5px;padding:2px 7px;margin-top:7px;text-transform:uppercase;letter-spacing:.3px}
+
+  .label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 7px}
+  .label:first-child{margin-top:0}
+
+  .yn{display:flex;gap:9px}
+  .yn button{flex:1;border:2px solid var(--line);background:#fff;border-radius:12px;padding:16px 4px;font-size:16px;font-weight:700;cursor:pointer;color:var(--muted);transition:.12s}
+  .yn button.y.on{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+  .yn button.n.on{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+  .yn button.x.on{background:var(--na-bg);border-color:var(--na);color:var(--na)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:24px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink);transition:.12s}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  input[type=text],input[type=date],textarea{width:100%;border:2px solid var(--line);border-radius:10px;padding:13px 14px;font-size:16px;font-family:inherit;background:#fff}
+  input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+  textarea{resize:vertical;min-height:80px}
+
+  .sub{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+  .sub .sq{font-size:15px;font-weight:600;margin-bottom:9px;display:flex;gap:8px}
+  .sub .sq .d{color:var(--gold)}
+
+  /* photos */
+  .photos{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .thumb{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#f0f2f5}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .rm{position:absolute;top:3px;right:3px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(15,27,45,.8);color:#fff;font-size:15px;line-height:20px;cursor:pointer;padding:0}
+  .addph{display:inline-flex;align-items:center;gap:9px;border:2px dashed var(--line);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;color:var(--navy);cursor:pointer;background:#fff}
+  .addph:active{background:#f4f6f9}
+  .addph .ic{font-size:18px}
+  .hint{font-size:11.5px;color:var(--grey);margin-top:8px;line-height:1.4}
+
+  .grid2{display:grid;gap:14px}
+
+  .nav{display:flex;gap:11px;padding:12px 16px;background:#fff;border-top:1px solid var(--line);padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .nav button{flex:1;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer}
+  .nav .back{flex:0 0 110px;background:#e4e9f0;color:var(--navy)}
+  .nav .next{background:var(--gold);color:var(--navy)}
+  .nav .save{background:var(--green);color:#fff}
+
+  .rev-item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+  .rev-item .rq{font-size:14px;font-weight:600;margin-bottom:6px}
+  .rev-item .ra{font-size:13px;color:var(--muted)}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:6px;margin-right:6px}
+  .tag.Y{background:var(--green-bg);color:var(--green)}
+  .tag.N{background:var(--red-bg);color:var(--red)}
+  .tag.NA{background:var(--na-bg);color:var(--na)}
+  .tag.none{background:#f0f0f0;color:#aaa}
+
+  #printView{display:none}
+  @media print{
+    .top,.nav,.screen{display:none!important}
+    #printView{display:block;padding:0 6px}
+    #printView h2{font-size:16px;border-bottom:2px solid #000;padding-bottom:6px}
+    #printView .pi{break-inside:avoid;border-bottom:1px solid #ccc;padding:8px 0}
+    #printView .pq{font-weight:700;font-size:13px}
+    #printView .pa{font-size:12.5px;margin-top:3px}
+    #printView .pimgs{margin-top:5px}
+    #printView .pimgs img{width:30%;max-height:140px;object-fit:cover;margin:2px;border:1px solid #999;vertical-align:top}
+    #printView table{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:12px}
+    #printView td{border:1px solid #999;padding:5px 7px}
+    @page{margin:12mm}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="row"><div class="ttl">MDU Site Audit · V.1.1</div><div class="step" id="topStep"></div></div>
+    <div class="pbar"><span id="pbar"></span></div>
+  </div>
+  <div class="screen" id="screen"></div>
+  <div class="nav" id="nav"></div>
+</div>
+<div id="printView"></div>
+
+<script>
+const SKEY="mduAuditWiz_v1";
+
+const ITEMS=[
+  {n:"1", q:"Lynham Lead-in pit installed?", yn:1, photo:1},
+  {n:"2", q:"Building Entry Point installed?", opts:{lab:"Type",c:["2 × P50","1 × P100"]}, yn:1, photo:1},
+  {n:"3", q:"Pathway from BEP to MCR installed?", opts:{lab:"Via",c:["Conduit","Cabletray"]}, yn:1, photo:1},
+  {n:"4", q:"Comms Room with lockable door installed (and DGPO)?", yn:1, photo:1, subs:[
+    {q:"Depth-Width-Height fit for MCR?", yn:1},
+    {q:"Wall (if MDF)", opts:{c:["Fire Rate","Fire Proof"]}},
+    {q:"Power (DGPO) to MCR?", yn:1}
+  ]},
+  {n:"5", q:"Pathway from MCR to Riser — Cabletray ready?", opts:{lab:"Run",c:["Vertical","Horizontal"]}, yn:1, photo:1},
+  {n:"6", q:"Depth of Riser to fit FDT–FDH–DR (and DGPO)?", schem:1, yn:1, photo:1, subs:[
+    {q:"Depth of Riser", inp:"e.g. 600 mm"},
+    {q:"Size of penetration", inp:"e.g. 150 mm"},
+    {q:"Wall (if MDF)", opts:{c:["Fire Rate","Fire Proof"]}}
+  ]},
+  {n:"7", q:"Apartments — Conduits/Cabletrays with drawstring ready?", yn:1, photo:1, subs:[
+    {q:"How many Apartments/Lots ready (or Levels)?", inp:"e.g. 24"}
+  ]},
+  {n:"8", q:"Tenancies — Conduits/Cabletrays with drawstring ready?", yn:1, photo:1},
+  {n:"9", q:"Cutouts in nominated location (and DGPO)?", schem:1, yn:1, photo:1, subs:[
+    {q:"Cutout as per schematic?", yn:1},
+    {q:"Drawstrings visible?", yn:1}
+  ]},
+  {n:"10", q:"Roof — 2 × P50 penetration + WP Cabinet/JBox ready?", yn:1, photo:1, subs:[
+    {q:"Penetration size", inp:"e.g. 50 mm"},
+    {q:"WPC/JBox location (mark on photo)", inp:"location note"}
+  ]},
+  {n:"11", q:"WAPs", photo:1, subs:[
+    {q:"Visible terminated Cat6 run to ALL WAP locations?", yn:1},
+    {q:"Correct WAP locations?", yn:1}
+  ]},
+  {n:"12", q:"Building Services", photo:1, subs:[
+    {q:"Terminated Cat6 run to ALL Building Services locations?", yn:1},
+    {q:"Location of NTD for BMS", inp:"location note"}
+  ]},
+  {n:"13", q:"Permanent power to ALL apartments ready?", yn:1, photo:1, subs:[
+    {q:"ETA if not ready", inp:"e.g. Aug 2026"}
+  ]}
+];
+
+let st={meta:{},obs:"",items:{}};
+let pos=0;
+const LAST=ITEMS.length+1;
+var CH={};
+
+/* ---------- text/answer storage (localStorage) ---------- */
+function load(){try{const r=localStorage.getItem(SKEY);if(r)st=Object.assign({meta:{},obs:"",items:{}},JSON.parse(r));}catch(e){}}
+function save(){try{localStorage.setItem(SKEY,JSON.stringify(st));}catch(e){}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function get(id){st.items[id]=st.items[id]||{};return st.items[id];}
+
+/* ---------- photo storage (IndexedDB, with in-memory fallback) ---------- */
+let db=null; const mem={}; const urlCache={};
+function idbOpen(){return new Promise(res=>{
+  try{
+    const r=indexedDB.open("mduAuditPhotos",1);
+    r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains("photos"))d.createObjectStore("photos",{keyPath:"id",autoIncrement:true});};
+    r.onsuccess=e=>{db=e.target.result;res(true);};
+    r.onerror=()=>res(false);
+  }catch(e){res(false);}
+});}
+function addPhoto(item,blob){return new Promise(res=>{
+  if(!db){mem[item]=mem[item]||[];const id="m"+Date.now()+Math.floor(Math.random()*1e4);mem[item].push({id,blob});return res(id);}
+  try{const tx=db.transaction("photos","readwrite").objectStore("photos").add({item,blob});tx.onsuccess=()=>res(tx.result);tx.onerror=()=>res(null);}catch(e){res(null);}
+});}
+function getPhotos(item){return new Promise(res=>{
+  if(!db)return res((mem[item]||[]).slice());
+  try{const tx=db.transaction("photos","readonly").objectStore("photos").getAll();tx.onsuccess=()=>res(tx.result.filter(r=>r.item===item));tx.onerror=()=>res([]);}catch(e){res([]);}
+});}
+function rmPhoto(item,id){return new Promise(res=>{
+  if(!db){mem[item]=(mem[item]||[]).filter(p=>p.id!==id);return res();}
+  try{const tx=db.transaction("photos","readwrite").objectStore("photos").delete(id);tx.onsuccess=()=>res();tx.onerror=()=>res();}catch(e){res();}
+});}
+function thumbURL(p){if(!urlCache[p.id])urlCache[p.id]=URL.createObjectURL(p.blob);return urlCache[p.id];}
+function blobToDataURL(b){return new Promise(r=>{try{if(!(b instanceof Blob)){return r("");}const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r("");fr.readAsDataURL(b);}catch(e){r("");}});}
+
+/* compress before storing */
+function compress(file){return new Promise(res=>{
+  try{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.width,h=img.height;const max=1280;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      c.toBlob(b=>res(b||file),"image/jpeg",0.6);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);res(file);};
+    img.src=url;
+  }catch(e){res(file);}
+});}
+
+async function addPhotos(item,files){
+  if(!files||!files.length)return;
+  const lbl=document.getElementById("addlbl_"+item);
+  if(lbl)lbl.textContent="Adding…";
+  for(const f of Array.from(files)){const b=await compress(f);await addPhoto(item,b);}
+  if(lbl)lbl.innerHTML='<span class="ic">＋</span> Add photo';
+  loadThumbs(item);
+}
+async function loadThumbs(item){
+  const el=document.getElementById("ph_"+item);if(!el)return;
+  const list=await getPhotos(item);
+  el.innerHTML=list.map(p=>`<div class="thumb"><img src="${thumbURL(p)}"><button class="rm" onclick="delPhoto('${item}','${p.id}')">×</button></div>`).join("");
+}
+async function delPhoto(item,id){
+  // db ids are numbers; mem ids are strings prefixed 'm'
+  const realId=(typeof id==='string'&&id[0]==='m')?id:Number(id);
+  await rmPhoto(item,realId);
+  if(urlCache[realId]){URL.revokeObjectURL(urlCache[realId]);delete urlCache[realId];}
+  loadThumbs(item);
+}
+
+/* ---------- progress ---------- */
+let totalYN=0; ITEMS.forEach(it=>{if(it.yn)totalYN++;(it.subs||[]).forEach(s=>{if(s.yn)totalYN++;});});
+function answeredYN(){let c=0;ITEMS.forEach(it=>{const d=st.items[it.n]||{};if(it.yn&&d.yn)c++;(it.subs||[]).forEach((s,i)=>{if(s.yn&&d["s"+i+"yn"])c++;});});return c;}
+
+/* ---------- builders ---------- */
+function ynHTML(id,key){const cur=(st.items[id]||{})[key]||"";return `<div class="yn">
+  <button class="y ${cur==='Y'?'on':''}" onclick="setVal('${id}','${key}','Y',1)">Yes</button>
+  <button class="n ${cur==='N'?'on':''}" onclick="setVal('${id}','${key}','N',1)">No</button>
+  <button class="x ${cur==='NA'?'on':''}" onclick="setVal('${id}','${key}','NA',1)">N/A</button></div>`;}
+function chipHTML(id,key,opts){const cur=(st.items[id]||{})[key]||"";return `<div class="chips">${opts.c.map((o,i)=>`<button class="chip ${cur===o?'on':''}" onclick="setVal('${id}','${key}',CH['${id}_${key}'][${i}],1)">${esc(o)}</button>`).join("")}</div>`;}
+function inpHTML(id,key,ph){const cur=(st.items[id]||{})[key]||"";return `<input type="text" value="${esc(cur)}" placeholder="${esc(ph)}" oninput="setVal('${id}','${key}',this.value,0)">`;}
+
+function renderScreen(){
+  const sc=document.getElementById("screen");
+  document.getElementById("pbar").style.width=Math.round(answeredYN()/totalYN*100)+"%";
+
+  if(pos===0){
+    document.getElementById("topStep").textContent="Site details";
+    sc.innerHTML=`
+      <div style="background:#fff6df;border:1px solid #ecd99a;color:#7a5a13;border-radius:12px;padding:13px 15px;font-size:13.5px;line-height:1.45">⚠︎ <b>Refer to the schematic</b> during the audit. All photos also to be uploaded to <b>Towers</b> under the project folder with the date.</div>
+      <div class="label" style="margin-top:18px">Site details</div>
+      <div class="grid2">
+        <div><div class="label">Targeted completion date</div><input type="date" value="${esc(st.meta.date)}" oninput="setMeta('date',this.value)"></div>
+        <div><div class="label">Auditor (FTT)</div><input type="text" value="${esc(st.meta.auditor)}" placeholder="Allocated by Alvin" oninput="setMeta('auditor',this.value)"></div>
+        <div><div class="label">Site contact</div><input type="text" value="${esc(st.meta.contact)}" placeholder="Name" oninput="setMeta('contact',this.value)"></div>
+        <div><div class="label">Site address</div><input type="text" value="${esc(st.meta.addr)}" placeholder="Address" oninput="setMeta('addr',this.value)"></div>
+      </div>`;
+  }
+  else if(pos>=1&&pos<=ITEMS.length){
+    const it=ITEMS[pos-1];
+    document.getElementById("topStep").textContent=`Item ${pos} of ${ITEMS.length}`;
+    let h=`<div class="qhead"><div class="qnum">${esc(it.n)}</div><div><div class="qtitle">${esc(it.q)}</div>${it.schem?'<div class="schem">see schematic</div>':''}</div></div>`;
+    if(it.yn){h+=`<div class="label">Installed / ready?</div>`+ynHTML(it.n,"yn");}
+    if(it.opts){CH[it.n+"_chip"]=it.opts.c;h+=`<div class="label">${esc(it.opts.lab)}</div>`+chipHTML(it.n,"chip",it.opts);}
+    (it.subs||[]).forEach((s,i)=>{
+      h+=`<div class="sub"><div class="sq"><span class="d">›</span>${esc(s.q)}</div>`;
+      if(s.yn)h+=ynHTML(it.n,"s"+i+"yn");
+      if(s.opts){CH[it.n+"_s"+i+"chip"]=s.opts.c;h+=chipHTML(it.n,"s"+i+"chip",s.opts);}
+      if(s.inp)h+=inpHTML(it.n,"s"+i+"txt",s.inp);
+      h+=`</div>`;
+    });
+    if(it.photo){
+      h+=`<div class="label">Photos</div>
+        <div class="photos" id="ph_${it.n}"></div>
+        <label class="addph" id="addlbl_${it.n}"><span class="ic">＋</span> Add photo
+          <input type="file" accept="image/*" multiple style="display:none" onchange="addPhotos('${it.n}',this.files)">
+        </label>
+        <div class="hint">Tap to take a photo or choose from your library. Stored on this device; also upload to Towers.</div>`;
+    }
+    h+=`<div class="label">Comment (optional)</div><textarea placeholder="Notes for this item…" oninput="setVal('${it.n}','note',this.value,0)">${esc((st.items[it.n]||{}).note)}</textarea>`;
+    sc.innerHTML=h;
+    if(it.photo)loadThumbs(it.n);
+  }
+  else{
+    document.getElementById("topStep").textContent="Review & save";
+    sc.innerHTML=`<div class="qtitle" style="margin-bottom:14px">Review & save</div>
+      <div class="label">Other comments / observations</div>
+      <textarea placeholder="Anything else noted on site…" oninput="setObs(this.value)">${esc(st.obs)}</textarea>
+      <div class="label" style="margin-top:18px">Summary</div>
+      <div id="reviewList">Loading…</div>`;
+    buildReview();
+  }
+  sc.scrollTop=0;
+  renderNav();
+}
+
+async function buildReview(){
+  const wrap=document.getElementById("reviewList");if(!wrap)return;
+  let h="";
+  for(const it of ITEMS){
+    const d=st.items[it.n]||{};let ans="";
+    if(it.yn){const v=d.yn||"none";ans+=`<span class="tag ${v}">${v==='NA'?'N/A':(v==='none'?'—':v==='Y'?'Yes':'No')}</span>`;}
+    if(d.chip)ans+=esc(d.chip)+" ";
+    (it.subs||[]).forEach((s,i)=>{
+      if(d["s"+i+"yn"]){const v=d["s"+i+"yn"];ans+=`<br><small>${esc(s.q)}: ${v==='NA'?'N/A':v==='Y'?'Yes':'No'}</small>`;}
+      if(d["s"+i+"chip"])ans+=`<br><small>${esc(s.q)}: ${esc(d["s"+i+"chip"])}</small>`;
+      if(d["s"+i+"txt"])ans+=`<br><small>${esc(s.q)}: ${esc(d["s"+i+"txt"])}</small>`;
+    });
+    if(it.photo){const ph=await getPhotos(it.n);if(ph.length)ans+=`<br><small>📷 ${ph.length} photo${ph.length>1?'s':''}</small>`;}
+    if(d.note)ans+=`<br><small>Note: ${esc(d.note)}</small>`;
+    h+=`<div class="rev-item"><div class="rq" onclick="goItem(${ITEMS.indexOf(it)+1})">${esc(it.n)}. ${esc(it.q)}</div><div class="ra">${ans||'<span class="tag none">not answered</span>'}</div></div>`;
+  }
+  wrap.innerHTML=h;
+}
+function goItem(i){pos=i;renderScreen();}
+
+function renderNav(){
+  const nav=document.getElementById("nav");
+  if(pos===0)nav.innerHTML=`<button class="next" onclick="next()">Start →</button>`;
+  else if(pos===LAST)nav.innerHTML=`<button class="back" onclick="prev()">← Back</button><button class="save" onclick="saveP()">Save PDF</button>`;
+  else nav.innerHTML=`<button class="back" onclick="prev()">← Back</button><button class="next" onclick="next()">${pos===ITEMS.length?'Review →':'Next →'}</button>`;
+}
+function next(){if(pos<LAST){pos++;renderScreen();}}
+function prev(){if(pos>0){pos--;renderScreen();}}
+
+function setVal(id,key,val,re){const d=get(id);d[key]=(re&&d[key]===val)?"":val;save();if(re)renderScreen();}
+function setMeta(k,v){st.meta[k]=v;save();}
+function setObs(v){st.obs=v;save();}
+
+async function buildPrint(){
+  const m=st.meta;
+  let h=`<h2>MDU Site Audit Checklist — V.1.1</h2>
+    <table>
+      <tr><td><b>Site address</b></td><td>${esc(m.addr)||'—'}</td><td><b>Auditor (FTT)</b></td><td>${esc(m.auditor)||'—'}</td></tr>
+      <tr><td><b>Site contact</b></td><td>${esc(m.contact)||'—'}</td><td><b>Target date</b></td><td>${esc(m.date)||'—'}</td></tr>
+    </table>`;
+  for(const it of ITEMS){
+    const d=st.items[it.n]||{};let a="";
+    if(it.yn){const v=d.yn;a+=`<b>${v==='NA'?'N/A':v==='Y'?'YES':v==='N'?'NO':'—'}</b>`;}
+    if(d.chip)a+=` &nbsp; [${esc(d.chip)}]`;
+    let subs="";
+    (it.subs||[]).forEach((s,i)=>{
+      let sv=d["s"+i+"yn"]?(d["s"+i+"yn"]==='NA'?'N/A':d["s"+i+"yn"]==='Y'?'Yes':'No'):(d["s"+i+"chip"]||d["s"+i+"txt"]||'—');
+      subs+=`<div style="margin-left:14px;font-size:12px">› ${esc(s.q)}: <b>${esc(sv)}</b></div>`;
+    });
+    let imgs="";
+    if(it.photo){const ph=await getPhotos(it.n);if(ph.length){const urls=(await Promise.all(ph.map(p=>blobToDataURL(p.blob)))).filter(Boolean);if(urls.length)imgs=`<div class="pimgs">${urls.map(u=>`<img src="${u}">`).join("")}</div>`;}}
+    h+=`<div class="pi"><div class="pq">${esc(it.n)}. ${esc(it.q)} — ${a}</div>${subs}${d.note?`<div class="pa">Note: ${esc(d.note)}</div>`:''}${imgs}</div>`;
+  }
+  if(st.obs)h+=`<div class="pi"><div class="pq">Other comments / observations</div><div class="pa">${esc(st.obs)}</div></div>`;
+  document.getElementById("printView").innerHTML=h;
+}
+async function saveP(){
+  const btn=document.querySelector(".nav .save");if(btn){btn.textContent="Preparing…";}
+  await buildPrint();
+  if(btn)btn.textContent="Save PDF";
+  setTimeout(()=>window.print(),80);
+}
+
+idbOpen().then(()=>{load();renderScreen();});
+</script>
+</body>
+</html>
